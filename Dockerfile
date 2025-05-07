@@ -1,24 +1,26 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install base tools
+# Install required packages for building BCC
 RUN apt-get update && apt-get install -y \
-    curl gnupg lsb-release ca-certificates
-
-# Add BCC repo for focal (Ubuntu 20.04)
-RUN echo "deb [trusted=yes] https://repo.iovisor.org/apt focal main" > /etc/apt/sources.list.d/iovisor.list
-
-# Install BCC and Python bindings
-RUN apt-get update && apt-get install -y \
-    python3-bcc \
-    bpfcc-tools \
-    python3-pip \
-    iproute2 \
-    git \
+    bison build-essential cmake flex git libedit-dev \
+    libllvm14 llvm-14-dev libclang-14-dev python3-distutils \
+    zlib1g-dev libelf-dev libfl-dev clang gcc-multilib \
+    iproute2 python3-pip curl wget ca-certificates \
     --no-install-recommends && apt-get clean
 
-# Copy your Python eBPF script
+# Build and install BCC from source
+RUN git clone --recursive https://github.com/iovisor/bcc.git /opt/bcc && \
+    cd /opt/bcc && \
+    mkdir build && cd build && \
+    cmake .. && make -j$(nproc) && make install && \
+    cmake -DPYTHON_CMD=python3 .. && make -C src/python install
+
+# Clean up source
+RUN rm -rf /opt/bcc
+
+# Copy your Python script
 COPY supplychain-detect.py /app/supplychain-detect.py
 WORKDIR /app
 
