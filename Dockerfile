@@ -1,8 +1,8 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and deps
+# Install build tools and BCC dependencies
 RUN apt-get update && apt-get install -y \
     bison build-essential cmake flex git libedit-dev \
     libllvm14 llvm-14-dev libclang-14-dev python3-distutils \
@@ -14,9 +14,10 @@ RUN apt-get update && apt-get install -y \
 RUN git clone --recursive https://github.com/iovisor/bcc.git /opt/bcc && \
     cd /opt/bcc && \
     mkdir build && cd build && \
-    cmake .. && make -j$(nproc) && make install && cmake -DPYTHON_CMD=python3 .. && make -C src/python install
+    cmake .. && make -j$(nproc) && make install && \
+    cmake -DPYTHON_CMD=python3 .. && make -C src/python install
 
-# Optional: Clean up
+# Clean up build files
 RUN rm -rf /opt/bcc
 
 # Copy your BCC Python script
