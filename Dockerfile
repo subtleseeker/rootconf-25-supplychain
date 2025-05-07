@@ -2,25 +2,29 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl gnupg lsb-release ca-certificates
+
+# Add BCC official repo
+RUN echo "deb [trusted=yes] https://repo.iovisor.org/apt focal main" | tee /etc/apt/sources.list.d/iovisor.list
+
+# Update with BCC repo and install packages
 RUN apt-get update && apt-get install -y \
     bpfcc-tools \
-    python3-pip \
     python3-bcc \
-    curl \
+    python3-pip \
     git \
     iproute2 \
     gcc \
     make \
     clang \
-    libbpf-dev \
     libelf-dev \
     libpcap-dev \
-    llvm \
     zlib1g-dev \
+    llvm \
     libclang-dev \
-    --no-install-recommends && \
-    apt-get clean
-
+    --no-install-recommends && apt-get clean
 
 COPY supplychain-detect.py /app/supplychain-detect.py
 
