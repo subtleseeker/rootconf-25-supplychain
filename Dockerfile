@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     apt-get clean
 
-COPY tracer.py /app/supplychain-detect.py
+COPY supplychain-detect.py /app/supplychain-detect.py
 
 WORKDIR /app
 
