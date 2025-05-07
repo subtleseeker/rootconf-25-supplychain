@@ -4,7 +4,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     bpfcc-tools \
-    linux-headers-$(uname -r) \
     python3-pip \
     python3-bcc \
     curl \
@@ -21,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     libclang-dev \
     --no-install-recommends && \
     apt-get clean
+
 
 COPY supplychain-detect.py /app/supplychain-detect.py
 
