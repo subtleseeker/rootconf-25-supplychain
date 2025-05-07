@@ -4,7 +4,6 @@ from time import strftime
 prog = """
 #include <uapi/linux/ptrace.h>
 #include <linux/sched.h>
-#include <linux/socket.h>
 
 struct data_t {
     u64 ts;
@@ -27,23 +26,22 @@ static void fill_common(struct data_t *data) {
     bpf_get_current_comm(&data->comm, sizeof(data->comm));
 }
 
-int trace_open(struct pt_regs *ctx, int dfd, const char __user *filename, int flags) {
+TRACEPOINT_PROBE(syscalls, sys_enter_openat) {
     struct data_t data = {};
     fill_common(&data);
 
-    // Only trigger for curl
+    // Filter to only curl
     if (!(data.comm[0] == 'c' && data.comm[1] == 'u' && data.comm[2] == 'r' && data.comm[3] == 'l'))
         return 0;
 
-    bpf_probe_read_user_str(&data.path, sizeof(data.path), filename);
+    bpf_probe_read_user_str(&data.path, sizeof(data.path), (void *)args->filename);
     data.event_type = EVENT_OPEN;
-    events.perf_submit(ctx, &data, sizeof(data));
+    events.perf_submit(args, &data, sizeof(data));
     return 0;
 }
 """
 
 b = BPF(text=prog)
-b.attach_kprobe(event="__x64_sys_openat", fn_name="trace_open")
 
 print("%-18s %-6s %-6s %-16s %-10s %s" % (
     "TIME", "PID", "UID", "COMM", "EVENT", "PATH"))
