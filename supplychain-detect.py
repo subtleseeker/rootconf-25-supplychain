@@ -3,7 +3,7 @@ from time import strftime
 import requests
 import json
 
-SLACK_WEBHOOK = "https://hooks.slack.com/services/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"  # replace with your actual URL
+SLACK_WEBHOOK = "https://hooks.slack.com/services/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"  # replace with your actual URL
 
 prog = """
 #include <uapi/linux/ptrace.h>
