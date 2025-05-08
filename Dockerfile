@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     bpfcc-tools \
     --no-install-recommends && apt-get clean
 
-RUN pip3 install bcc
+RUN pip3 install bcc requests
 
 COPY supplychain-detect.py /app/supplychain-detect.py
 WORKDIR /app
