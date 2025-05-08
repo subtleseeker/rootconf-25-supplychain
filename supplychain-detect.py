@@ -1,5 +1,9 @@
 from bcc import BPF
 from time import strftime
+import requests
+import json
+
+SLACK_WEBHOOK = "https://hooks.slack.com/services/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"  # replace with your actual URL
 
 prog = """
 #include <uapi/linux/ptrace.h>
@@ -30,7 +34,6 @@ TRACEPOINT_PROBE(syscalls, sys_enter_openat) {
     struct data_t data = {};
     fill_common(&data);
 
-    // Filter to only curl
     if (!(data.comm[0] == 'c' && data.comm[1] == 'u' && data.comm[2] == 'r' && data.comm[3] == 'l'))
         return 0;
 
@@ -46,6 +49,20 @@ b = BPF(text=prog)
 print("%-18s %-6s %-6s %-16s %-10s %s" % (
     "TIME", "PID", "UID", "COMM", "EVENT", "PATH"))
 
+def send_slack_alert(event):
+    msg = {
+        "text": f":warning: Detected *curl* accessing a file!\n"
+                f"*Time:* {strftime('%H:%M:%S')}\n"
+                f"*PID:* {event.pid}\n"
+                f"*UID:* {event.uid}\n"
+                f"*Command:* `{event.comm.decode(errors='replace')}`\n"
+                f"*File:* `{event.path.decode(errors='replace')}`"
+    }
+    try:
+        requests.post(SLACK_WEBHOOK, json=msg, timeout=3)
+    except Exception as e:
+        print(f"Slack alert failed: {e}")
+
 def print_event(cpu, data, size):
     event = b["events"].event(data)
     print("%-18s %-6d %-6d %-16s %-10s %s" % (
@@ -55,6 +72,7 @@ def print_event(cpu, data, size):
         event.comm.decode(errors='replace'),
         "open",
         event.path.decode(errors='replace')))
+    send_slack_alert(event)
 
 b["events"].open_perf_buffer(print_event)
 
