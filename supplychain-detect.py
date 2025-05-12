@@ -58,18 +58,20 @@ def decode_webhook():
 
 def send_slack_alert(event):
     webhook_url = decode_webhook()
-    msg = {
-        "text": f":warning: Detected *curl* accessing a file!\n"
-                f"*Time:* {strftime('%H:%M:%S')}\n"
-                f"*PID:* {event.pid}\n"
-                f"*UID:* {event.uid}\n"
-                f"*Command:* `{event.comm.decode(errors='replace')}`\n"
-                f"*File:* `{event.path.decode(errors='replace')}`"
-    }
-    try:
-        requests.post(webhook_url, json=msg, timeout=3)
-    except Exception as e:
-        print(f"Slack alert failed: {e}")
+    decoded_path = event.path.decode(errors='replace')
+    if decoded_path == "/etc/passwd":
+        msg = {
+            "text": f":warning: Detected *curl* accessing a file!\n"
+                    f"*Time:* {strftime('%H:%M:%S')}\n"
+                    f"*PID:* {event.pid}\n"
+                    f"*UID:* {event.uid}\n"
+                    f"*Command:* `{event.comm.decode(errors='replace')}`\n"
+                    f"*File:* `{decoded_path}`"
+        }
+        try:
+            requests.post(webhook_url, json=msg, timeout=3)
+        except Exception as e:
+            print(f"Slack alert failed: {e}")
 
 def print_event(cpu, data, size):
     event = b["events"].event(data)
