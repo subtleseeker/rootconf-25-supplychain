@@ -2,8 +2,10 @@ from bcc import BPF
 from time import strftime
 import requests
 import json
+import base64
 
-SLACK_WEBHOOK = "https://hooks.slack.com/services/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"  # replace with your actual URL
+# Double base64 encoded webhook
+ENCODED_WEBHOOK = b"REPLACE_WITH_YOUR_DOUBLE_ENCODED_STRING"
 
 prog = """
 #include <uapi/linux/ptrace.h>
@@ -49,7 +51,13 @@ b = BPF(text=prog)
 print("%-18s %-6s %-6s %-16s %-10s %s" % (
     "TIME", "PID", "UID", "COMM", "EVENT", "PATH"))
 
+def decode_webhook():
+    first_decode = base64.b64decode(ENCODED_WEBHOOK)
+    second_decode = base64.b64decode(first_decode)
+    return second_decode.decode('utf-8')
+
 def send_slack_alert(event):
+    webhook_url = decode_webhook()
     msg = {
         "text": f":warning: Detected *curl* accessing a file!\n"
                 f"*Time:* {strftime('%H:%M:%S')}\n"
@@ -59,7 +67,7 @@ def send_slack_alert(event):
                 f"*File:* `{event.path.decode(errors='replace')}`"
     }
     try:
-        requests.post(SLACK_WEBHOOK, json=msg, timeout=3)
+        requests.post(webhook_url, json=msg, timeout=3)
     except Exception as e:
         print(f"Slack alert failed: {e}")
 
