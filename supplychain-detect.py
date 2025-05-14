@@ -4,9 +4,6 @@ import requests
 import json
 import base64
 
-# Double base64 encoded webhook
-ENCODED_WEBHOOK = b"YUhSMGNITTZMeTlvYjI5cmN5NXpiR0ZqYXk1amIyMHZjMlZ5ZG1salpYTXZWREF4T1RnMVZERkNVazR2UWpBNFVsb3dNVTR5U2tVdk5YZDNiVE5vV25OUlRuWnhVSFZXYTFsdk5GZHhTVzVy"
-
 prog = """
 #include <uapi/linux/ptrace.h>
 #include <linux/sched.h>
@@ -36,9 +33,6 @@ TRACEPOINT_PROBE(syscalls, sys_enter_openat) {
     struct data_t data = {};
     fill_common(&data);
 
-    if (!(data.comm[0] == 'c' && data.comm[1] == 'u' && data.comm[2] == 'r' && data.comm[3] == 'l'))
-        return 0;
-
     bpf_probe_read_user_str(&data.path, sizeof(data.path), (void *)args->filename);
     data.event_type = EVENT_OPEN;
     events.perf_submit(args, &data, sizeof(data));
@@ -51,28 +45,6 @@ b = BPF(text=prog)
 print("%-18s %-6s %-6s %-16s %-10s %s" % (
     "TIME", "PID", "UID", "COMM", "EVENT", "PATH"))
 
-def decode_webhook():
-    first_decode = base64.b64decode(ENCODED_WEBHOOK)
-    second_decode = base64.b64decode(first_decode)
-    return second_decode.decode('utf-8')
-
-def send_slack_alert(event):
-    webhook_url = decode_webhook()
-    decoded_path = event.path.decode(errors='replace')
-    if decoded_path == "/etc/passwd":
-        msg = {
-            "text": f":warning: Detected *curl* accessing a file!\n"
-                    f"*Time:* {strftime('%H:%M:%S')}\n"
-                    f"*PID:* {event.pid}\n"
-                    f"*UID:* {event.uid}\n"
-                    f"*Command:* `{event.comm.decode(errors='replace')}`\n"
-                    f"*File:* `{decoded_path}`"
-        }
-        try:
-            requests.post(webhook_url, json=msg, timeout=3)
-        except Exception as e:
-            print(f"Slack alert failed: {e}")
-
 def print_event(cpu, data, size):
     event = b["events"].event(data)
     print("%-18s %-6d %-6d %-16s %-10s %s" % (
@@ -82,7 +54,6 @@ def print_event(cpu, data, size):
         event.comm.decode(errors='replace'),
         "open",
         event.path.decode(errors='replace')))
-    send_slack_alert(event)
 
 b["events"].open_perf_buffer(print_event)
 
