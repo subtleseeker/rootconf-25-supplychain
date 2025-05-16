@@ -18,4 +18,4 @@ RUN pip3 install bcc requests
 COPY supplychain-detect.py /app/supplychain-detect.py
 WORKDIR /app
 
-CMD ["python3", "supplychain-detect.py"]
+CMD ["python3", "openat.py"]
